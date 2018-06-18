@@ -4,8 +4,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/wire"
 )
 
-// Register concrete types on wire codec
 func RegisterWire(cdc *wire.Codec) {
-	cdc.RegisterConcrete(IBCTransferMsg{}, "cosmos-sdk/IBCTransferMsg", nil)
-	cdc.RegisterConcrete(IBCReceiveMsg{}, "cosmos-sdk/IBCReceiveMsg", nil)
+	cdc.RegisterConcrete(MsgReceive{}, "cosmos-sdk/Receive", nil)
+	cdc.RegisterConcrete(MsgReceipt{}, "cosmos-sdk/Receipt", nil)
+	cdc.RegisterConcrete(MsgReceiveCleanup{}, "cosmos-sdk/ReceiveCleanup", nil)
+	cdc.RegisterConcrete(MsgReceiptCleanup{}, "cosmos-sdk/ReceiptCleanup", nil)
+	cdc.RegisterConcrete(MsgOpenConnection{}, "cosmos-sdk/OpenConnection", nil)
+	cdc.RegisterConcrete(MsgUpdateConnection{}, "cosmos-sdk/UpdateConnection", nil)
+
+	cdc.RegisterInterface((*Payload)(nil), nil)
 }

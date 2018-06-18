@@ -3,133 +3,259 @@ package ibc
 import (
 	"encoding/json"
 
+	"github.com/tendermint/tendermint/lite"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	wire "github.com/cosmos/cosmos-sdk/wire"
 )
 
-var (
-	msgCdc *wire.Codec
-)
+// TODO: lightclient verification
 
-func init() {
-	msgCdc = wire.NewCodec()
+// ---------------------------------
+// MsgReceive
+
+// MsgReceive defines the message that a relayer uses to post a packet
+// to the destination chain.
+
+type MsgReceive struct {
+	Packet
+	Proof
+	Relayer sdk.Address
+}
+
+func (msg MsgReceive) Get(key interface{}) interface{} {
+	return nil
+}
+
+func (msg MsgReceive) GetSignBytes() []byte {
+	bz, err := json.Marshal(msg)
+	if err != nil {
+		panic(err)
+	}
+	return bz
+}
+
+func (msg MsgReceive) GetSigners() []sdk.Address {
+	return []sdk.Address{msg.Relayer}
+}
+
+func (msg MsgReceive) Verify(store sdk.KVStore, c Channel) sdk.Error {
+	chainID := msg.Packet.SrcChain
+
+	expected := egressQueue(store, c.k.cdc, chainID)
+	// TODO: unify int64/uint64
+	proof := msg.Proof
+	if proof.Sequence != uint64(expected.Len()) {
+		return ErrInvalidSequence(c.k.codespace)
+	}
+
+	return proof.Verify(store, msg.Packet)
+}
+
+// --------------------------------
+// MsgReceipt
+
+type MsgReceipt struct {
+	Packet
+	Proof
+	Relayer sdk.Address
+}
+
+func (msg MsgReceipt) Get(key interface{}) interface{} {
+	return nil
+}
+
+func (msg MsgReceipt) GetSignBytes() []byte {
+	bz, err := json.Marshal(msg)
+	if err != nil {
+		panic(err)
+	}
+	return bz
+}
+
+func (msg MsgReceipt) GetSigners() []sdk.Address {
+	return []sdk.Address{msg.Relayer}
+}
+
+func (msg MsgReceipt) Verify(store sdk.KVStore, c Channel) sdk.Error {
+	chainID := msg.Packet.SrcChain
+
+	expected := getIngressReceiptSequence(store, c.k.cdc, chainID)
+	proof := msg.Proof
+	if proof.Sequence != uint64(expected) {
+		return ErrInvalidSequence(c.k.codespace)
+	}
+
+	return proof.Verify(store, msg.Packet)
+}
+
+// --------------------------------
+// MsgReceiveCleanup
+
+type MsgReceiveCleanup struct {
+	ChannelName string
+	Sequence    int64
+	SrcChain    string
+	Cleaner     sdk.Address
+}
+
+func (msg MsgReceiveCleanup) Get(key interface{}) interface{} {
+	return nil
+}
+
+func (msg MsgReceiveCleanup) GetSignBytes() []byte {
+	bz, err := json.Marshal(msg)
+	if err != nil {
+		panic(err)
+	}
+	return bz
+}
+
+func (msg MsgReceiveCleanup) GetSigners() []sdk.Address {
+	return []sdk.Address{msg.Cleaner}
+}
+
+func (msg MsgReceiveCleanup) Type() string {
+	return "ibc"
+}
+
+func (msg MsgReceiveCleanup) ValidateBasic() sdk.Error {
+	return nil
+}
+
+// --------------------------------
+// MsgReceiptCleanup
+
+type MsgReceiptCleanup struct {
+	ChannelName string
+	Sequence    int64
+	SrcChain    string
+	Cleaner     sdk.Address
+}
+
+func (msg MsgReceiptCleanup) Get(key interface{}) interface{} {
+	return nil
+}
+
+func (msg MsgReceiptCleanup) GetSignBytes() []byte {
+	bz, err := json.Marshal(msg)
+	if err != nil {
+		panic(err)
+	}
+	return bz
+}
+
+func (msg MsgReceiptCleanup) GetSigners() []sdk.Address {
+	return []sdk.Address{msg.Cleaner}
+}
+
+func (msg MsgReceiptCleanup) Type() string {
+	return "ibc"
+}
+
+func (msg MsgReceiptCleanup) ValidateBasic() sdk.Error {
+	return nil
+}
+
+//-------------------------------------
+// MsgOpenConnection
+
+// MsgOpenConnection defines the message that is used for open a c
+// that receives msg from another chain
+type MsgOpenConnection struct {
+	ROT      lite.FullCommit
+	SrcChain []byte
+	Signer   sdk.Address
+}
+
+func (msg MsgOpenConnection) Type() string {
+	return "ibc"
+}
+
+func (msg MsgOpenConnection) Get(key interface{}) interface{} {
+	return nil
+}
+
+func (msg MsgOpenConnection) GetSignBytes() []byte {
+	bz, err := json.Marshal(msg)
+	if err != nil {
+		panic(err)
+	}
+	return bz
+}
+
+func (msg MsgOpenConnection) ValidateBasic() sdk.Error {
+	return nil
+}
+
+func (msg MsgOpenConnection) GetSigners() []sdk.Address {
+	return []sdk.Address{msg.Signer}
+}
+
+//------------------------------------
+// MsgUpdateConnection
+
+type MsgUpdateConnection struct {
+	SrcChain []byte
+	Commit   lite.FullCommit
+	//PacketProof
+	Signer sdk.Address
+}
+
+func (msg MsgUpdateConnection) Type() string {
+	return "ibc"
+}
+
+func (msg MsgUpdateConnection) Get(key interface{}) interface{} {
+	return nil
+}
+
+func (msg MsgUpdateConnection) GetSignBytes() []byte {
+	bz, err := json.Marshal(msg)
+	if err != nil {
+		panic(err)
+	}
+	return bz
+}
+
+func (msg MsgUpdateConnection) ValidateBasic() sdk.Error {
+	return nil
+}
+
+func (msg MsgUpdateConnection) GetSigners() []sdk.Address {
+	return []sdk.Address{msg.Signer}
 }
 
 // ------------------------------
-// IBCPacket
+// Payload
+// Payload defines inter-blockchain message
+// that can be proved by light-client protocol
 
-// nolint - TODO rename to Packet as IBCPacket stutters (golint)
-// IBCPacket defines a piece of data that can be send between two separate
+type Payload interface {
+	Type() string
+	ValidateBasic() sdk.Error
+}
+
+// ------------------------------
+// Packet
+
+// Packet defines a piece of data that can be send between two separate
 // blockchains.
-type IBCPacket struct {
-	SrcAddr   sdk.Address
-	DestAddr  sdk.Address
-	Coins     sdk.Coins
+type Packet struct {
+	Payload
 	SrcChain  string
 	DestChain string
 }
 
-func NewIBCPacket(srcAddr sdk.Address, destAddr sdk.Address, coins sdk.Coins,
-	srcChain string, destChain string) IBCPacket {
+// ------------------------------
+// Proof
 
-	return IBCPacket{
-		SrcAddr:   srcAddr,
-		DestAddr:  destAddr,
-		Coins:     coins,
-		SrcChain:  srcChain,
-		DestChain: destChain,
-	}
+type Proof struct {
+	// Proof merkle.Proof
+	Height   uint64
+	Sequence uint64
 }
 
-//nolint
-func (p IBCPacket) GetSignBytes() []byte {
-	b, err := msgCdc.MarshalJSON(struct {
-		SrcAddr   string
-		DestAddr  string
-		Coins     sdk.Coins
-		SrcChain  string
-		DestChain string
-	}{
-		SrcAddr:   sdk.MustBech32ifyAcc(p.SrcAddr),
-		DestAddr:  sdk.MustBech32ifyAcc(p.DestAddr),
-		Coins:     p.Coins,
-		SrcChain:  p.SrcChain,
-		DestChain: p.DestChain,
-	})
-	if err != nil {
-		panic(err)
-	}
-	return b
-}
-
-// validator the ibc packey
-func (p IBCPacket) ValidateBasic() sdk.Error {
-	if p.SrcChain == p.DestChain {
-		return ErrIdenticalChains(DefaultCodespace).TraceSDK("")
-	}
-	if !p.Coins.IsValid() {
-		return sdk.ErrInvalidCoins("")
-	}
+func (prf Proof) Verify(store sdk.KVStore, p Packet) sdk.Error {
+	// TODO: implement
 	return nil
-}
-
-// ----------------------------------
-// IBCTransferMsg
-
-// nolint - TODO rename to TransferMsg as folks will reference with ibc.TransferMsg
-// IBCTransferMsg defines how another module can send an IBCPacket.
-type IBCTransferMsg struct {
-	IBCPacket
-}
-
-// nolint
-func (msg IBCTransferMsg) Type() string { return "ibc" }
-
-// x/bank/tx.go MsgSend.GetSigners()
-func (msg IBCTransferMsg) GetSigners() []sdk.Address { return []sdk.Address{msg.SrcAddr} }
-
-// get the sign bytes for ibc transfer message
-func (msg IBCTransferMsg) GetSignBytes() []byte {
-	return msg.IBCPacket.GetSignBytes()
-}
-
-// validate ibc transfer message
-func (msg IBCTransferMsg) ValidateBasic() sdk.Error {
-	return msg.IBCPacket.ValidateBasic()
-}
-
-// ----------------------------------
-// IBCReceiveMsg
-
-// nolint - TODO rename to ReceiveMsg as folks will reference with ibc.ReceiveMsg
-// IBCReceiveMsg defines the message that a relayer uses to post an IBCPacket
-// to the destination chain.
-type IBCReceiveMsg struct {
-	IBCPacket
-	Relayer  sdk.Address
-	Sequence int64
-}
-
-// nolint
-func (msg IBCReceiveMsg) Type() string             { return "ibc" }
-func (msg IBCReceiveMsg) ValidateBasic() sdk.Error { return msg.IBCPacket.ValidateBasic() }
-
-// x/bank/tx.go MsgSend.GetSigners()
-func (msg IBCReceiveMsg) GetSigners() []sdk.Address { return []sdk.Address{msg.Relayer} }
-
-// get the sign bytes for ibc receive message
-func (msg IBCReceiveMsg) GetSignBytes() []byte {
-	b, err := msgCdc.MarshalJSON(struct {
-		IBCPacket json.RawMessage
-		Relayer   string
-		Sequence  int64
-	}{
-		IBCPacket: json.RawMessage(msg.IBCPacket.GetSignBytes()),
-		Relayer:   sdk.MustBech32ifyAcc(msg.Relayer),
-		Sequence:  msg.Sequence,
-	})
-	if err != nil {
-		panic(err)
-	}
-	return b
 }

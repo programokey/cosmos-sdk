@@ -9,8 +9,8 @@ import (
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/log"
 
-	tmserver "github.com/tendermint/tendermint/rpc/lib/server"
 	cmn "github.com/tendermint/tendermint/libs/common"
+	tmserver "github.com/tendermint/tendermint/rpc/lib/server"
 
 	client "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -21,8 +21,6 @@ import (
 	auth "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/client/rest"
 	gov "github.com/cosmos/cosmos-sdk/x/gov/client/rest"
-	ibc "github.com/cosmos/cosmos-sdk/x/ibc/client/rest"
-	slashing "github.com/cosmos/cosmos-sdk/x/slashing/client/rest"
 	stake "github.com/cosmos/cosmos-sdk/x/stake/client/rest"
 )
 
@@ -83,7 +81,6 @@ func createHandler(cdc *wire.Codec) http.Handler {
 	tx.RegisterRoutes(ctx, r, cdc)
 	auth.RegisterRoutes(ctx, r, cdc, "acc")
 	bank.RegisterRoutes(ctx, r, cdc, kb)
-	ibc.RegisterRoutes(ctx, r, cdc, kb)
 	stake.RegisterRoutes(ctx, r, cdc, kb)
 	slashing.RegisterRoutes(ctx, r, cdc, kb)
 	gov.RegisterRoutes(ctx, r, cdc)
