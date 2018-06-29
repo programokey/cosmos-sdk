@@ -53,6 +53,8 @@ type iavlStore struct {
 	// By default this value should be set the same across all nodes,
 	// so that nodes can know the waypoints their peers store.
 	storeEvery int64
+	// A value of 0 means keep all history.
+	numHistory int64
 }
 
 // CONTRACT: tree should be fully loaded.
@@ -67,7 +69,6 @@ func newIAVLStore(tree *iavl.VersionedTree, numRecent int64, storeEvery int64) *
 
 // Implements Committer.
 func (st *iavlStore) Commit() CommitID {
-
 	// Save a new version.
 	hash, version, err := st.tree.SaveVersion()
 	if err != nil {
@@ -159,6 +160,11 @@ func (st *iavlStore) Delete(key []byte) {
 // Implements KVStore
 func (st *iavlStore) Prefix(prefix []byte) KVStore {
 	return prefixStore{st, prefix}
+}
+
+// Implements KVStore
+func (st *iavlStore) Gas(meter GasMeter, config GasConfig) KVStore {
+	return NewGasKVStore(meter, config, st)
 }
 
 // Implements KVStore.
