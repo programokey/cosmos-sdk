@@ -15,6 +15,7 @@ import (
 	wire "github.com/cosmos/cosmos-sdk/wire"
 
 	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/x/ibc"
 )
 
 func setupMultiStore() (sdk.MultiStore, *sdk.KVStoreKey) {
@@ -34,7 +35,7 @@ func TestKeeper(t *testing.T) {
 
 	ctx := sdk.NewContext(ms, abci.Header{}, false, log.NewNopLogger())
 	accountMapper := auth.NewAccountMapper(cdc, authKey, &auth.BaseAccount{})
-	coinKeeper := NewKeeper(accountMapper)
+	coinKeeper := NewKeeper(accountMapper, ibc.Channel{})
 
 	addr := sdk.Address([]byte("addr1"))
 	addr2 := sdk.Address([]byte("addr2"))
@@ -119,8 +120,8 @@ func TestSendKeeper(t *testing.T) {
 
 	ctx := sdk.NewContext(ms, abci.Header{}, false, log.NewNopLogger())
 	accountMapper := auth.NewAccountMapper(cdc, authKey, &auth.BaseAccount{})
-	coinKeeper := NewKeeper(accountMapper)
-	sendKeeper := NewSendKeeper(accountMapper)
+	coinKeeper := NewKeeper(accountMapper, ibc.Channel{})
+	sendKeeper := NewSendKeeper(accountMapper, ibc.Channel{})
 
 	addr := sdk.Address([]byte("addr1"))
 	addr2 := sdk.Address([]byte("addr2"))
@@ -188,7 +189,7 @@ func TestViewKeeper(t *testing.T) {
 
 	ctx := sdk.NewContext(ms, abci.Header{}, false, log.NewNopLogger())
 	accountMapper := auth.NewAccountMapper(cdc, authKey, &auth.BaseAccount{})
-	coinKeeper := NewKeeper(accountMapper)
+	coinKeeper := NewKeeper(accountMapper, ibc.Channel{})
 	viewKeeper := NewViewKeeper(accountMapper)
 
 	addr := sdk.Address([]byte("addr1"))

@@ -5,6 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/x/ibc"
 )
 
 const (
@@ -17,12 +18,13 @@ const (
 
 // Keeper manages transfers between accounts
 type Keeper struct {
-	am auth.AccountMapper
+	am   auth.AccountMapper
+	ibcc ibc.Channel
 }
 
 // NewKeeper returns a new Keeper
-func NewKeeper(am auth.AccountMapper) Keeper {
-	return Keeper{am: am}
+func NewKeeper(am auth.AccountMapper, ibcc ibc.Keeper) Keeper {
+	return Keeper{am: am, ibcc: ibcc}
 }
 
 // GetCoins returns the coins at the addr.
@@ -55,6 +57,11 @@ func (keeper Keeper) SendCoins(ctx sdk.Context, fromAddr sdk.Address, toAddr sdk
 	return sendCoins(ctx, keeper.am, fromAddr, toAddr, amt)
 }
 
+// SendIBCCoins moves coins from one account to another on another chain
+func (keeper Keeper) IBCSendCoins(ctx sdk.Context, p PayloadSend, destChain string) (sdk.Tags, sdk.Error) {
+	return ibcSendCoins(ctx, keeper.am, keeper.ibcc, p, destChain)
+}
+
 // InputOutputCoins handles a list of inputs and outputs
 func (keeper Keeper) InputOutputCoins(ctx sdk.Context, inputs []Input, outputs []Output) (sdk.Tags, sdk.Error) {
 	return inputOutputCoins(ctx, keeper.am, inputs, outputs)
@@ -64,12 +71,13 @@ func (keeper Keeper) InputOutputCoins(ctx sdk.Context, inputs []Input, outputs [
 
 // SendKeeper only allows transfers between accounts, without the possibility of creating coins
 type SendKeeper struct {
-	am auth.AccountMapper
+	am   auth.AccountMapper
+	ibcc ibc.Channel
 }
 
 // NewSendKeeper returns a new Keeper
-func NewSendKeeper(am auth.AccountMapper) SendKeeper {
-	return SendKeeper{am: am}
+func NewSendKeeper(am auth.AccountMapper, ibcc ibc.Channel) SendKeeper {
+	return SendKeeper{am: am, ibcc: ibcc}
 }
 
 // GetCoins returns the coins at the addr.
@@ -85,6 +93,11 @@ func (keeper SendKeeper) HasCoins(ctx sdk.Context, addr sdk.Address, amt sdk.Coi
 // SendCoins moves coins from one account to another
 func (keeper SendKeeper) SendCoins(ctx sdk.Context, fromAddr sdk.Address, toAddr sdk.Address, amt sdk.Coins) (sdk.Tags, sdk.Error) {
 	return sendCoins(ctx, keeper.am, fromAddr, toAddr, amt)
+}
+
+// SendIBCCoins moves coins from one account to another on another chain
+func (keeper SendKeeper) IBCSendCoins(ctx sdk.Context, p PayloadSend, destChain string) (sdk.Tags, sdk.Error) {
+	return ibcSendCoins(ctx, keeper.am, keeper.ibcc, p, destChain)
 }
 
 // InputOutputCoins handles a list of inputs and outputs
@@ -186,6 +199,20 @@ func sendCoins(ctx sdk.Context, am auth.AccountMapper, fromAddr sdk.Address, toA
 	}
 
 	return subTags.AppendTags(addTags), nil
+}
+
+func ibcSendCoins(ctx sdk.Context, am auth.AccountMapper, ibcc ibc.Channel, p PayloadSend, destChain string) (sdk.Tags, sdk.Error) {
+	_, subTags, err := subtractCoins(ctx, am, p.SrcAddr, p.Coins)
+	if err != nil {
+		return nil, err
+	}
+
+	err = ibcc.Send(ctx, p, destChain, DefaultCodespace)
+	if err != nil {
+		return nil, err
+	}
+
+	return subTags.AppendTags(sdk.NewTags("recipient", []byte(p.DestAddr.String()), "chain", []byte(destChain))), nil
 }
 
 // InputOutputCoins handles a list of inputs and outputs

@@ -18,6 +18,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/wire"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/cosmos/cosmos-sdk/x/ibc"
 	"github.com/cosmos/cosmos-sdk/x/stake/types"
 )
 
@@ -105,7 +106,7 @@ func CreateTestInput(t *testing.T, isCheckTx bool, initCoins int64) (sdk.Context
 		keyAcc,              // target store
 		&auth.BaseAccount{}, // prototype
 	)
-	ck := bank.NewKeeper(accountMapper)
+	ck := bank.NewKeeper(accountMapper, ibc.Channel{})
 	keeper := NewKeeper(cdc, keyStake, ck, types.DefaultCodespace)
 	keeper.SetPool(ctx, types.InitialPool())
 	keeper.SetNewParams(ctx, types.DefaultParams())

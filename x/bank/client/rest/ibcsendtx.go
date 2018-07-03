@@ -72,7 +72,7 @@ func TransferRequestHandlerFn(cdc *wire.Codec, kb keys.Keybase, ctx context.Core
 
 		// build message
 		p := bank.PayloadSend{
-			SrcAddr:  info.PubKey.Address(),
+			SrcAddr:  info.GetPubKey().Address(),
 			DestAddr: to,
 			Coins:    m.Amount,
 		}

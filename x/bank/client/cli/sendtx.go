@@ -43,7 +43,7 @@ func SendTxCmd(cdc *wire.Codec) *cobra.Command {
 			// build and sign the transaction, then broadcast to Tendermint
 			msg := client.BuildMsg(from, to, coins)
 
-			if viper.GetBool(flagAsync) {
+			if viper.GetBool(FlagAsync) {
 				res, err := ctx.EnsureSignBuildBroadcastAsync(ctx.FromAddressName, []sdk.Msg{msg}, cdc)
 				if err != nil {
 					return err
@@ -63,6 +63,6 @@ func SendTxCmd(cdc *wire.Codec) *cobra.Command {
 
 	cmd.Flags().String(FlagTo, "", "Address to send coins")
 	cmd.Flags().String(FlagAmount, "", "Amount of coins to send")
-	cmd.Flags().Bool(flagAsync, false, "Pass the async flag to send a tx without waiting for the tx to be included in a block")
+	cmd.Flags().Bool(FlagAsync, false, "Pass the async flag to send a tx without waiting for the tx to be included in a block")
 	return cmd
 }

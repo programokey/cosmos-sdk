@@ -21,6 +21,7 @@ import (
 	auth "github.com/cosmos/cosmos-sdk/x/auth/client/rest"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/client/rest"
 	gov "github.com/cosmos/cosmos-sdk/x/gov/client/rest"
+	slashing "github.com/cosmos/cosmos-sdk/x/slashing/client/rest"
 	stake "github.com/cosmos/cosmos-sdk/x/stake/client/rest"
 )
 

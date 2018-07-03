@@ -14,6 +14,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/mock"
 	"github.com/cosmos/cosmos-sdk/x/bank"
+	"github.com/cosmos/cosmos-sdk/x/ibc"
 	"github.com/cosmos/cosmos-sdk/x/stake"
 )
 
@@ -27,7 +28,7 @@ func getMockApp(t *testing.T, numGenAccs int64) (*mock.App, Keeper, stake.Keeper
 	keyStake := sdk.NewKVStoreKey("stake")
 	keyGov := sdk.NewKVStoreKey("gov")
 
-	ck := bank.NewKeeper(mapp.AccountMapper)
+	ck := bank.NewKeeper(mapp.AccountMapper, ibc.Channel{})
 	sk := stake.NewKeeper(mapp.Cdc, keyStake, ck, mapp.RegisterCodespace(stake.DefaultCodespace))
 	keeper := NewKeeper(mapp.Cdc, keyGov, ck, sk, DefaultCodespace)
 	mapp.Router().AddRoute("gov", NewHandler(keeper))

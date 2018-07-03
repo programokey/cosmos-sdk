@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/auth/mock"
+	"github.com/cosmos/cosmos-sdk/x/ibc"
 
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
@@ -87,7 +88,7 @@ func getBenchmarkMockApp() (*mock.App, error) {
 	mapp := mock.NewApp()
 
 	RegisterWire(mapp.Cdc)
-	coinKeeper := NewKeeper(mapp.AccountMapper)
+	coinKeeper := NewKeeper(mapp.AccountMapper, ibc.Channel{})
 	mapp.Router().AddRoute("bank", NewHandler(coinKeeper))
 
 	err := mapp.CompleteSetup([]*sdk.KVStoreKey{})
@@ -212,10 +213,4 @@ func TestMsgSendDependent(t *testing.T) {
 
 	// Check balances
 	mock.CheckBalance(t, mapp, addr1, sdk.Coins{sdk.NewCoin("foocoin", 42)})
-}
-
-func TestIBCSend(t *testing.T) {
-	mapp := getMockApp(t)
-
-	acc1 := 
 }

@@ -12,6 +12,8 @@ func NewHandler(k Keeper) sdk.Handler {
 		switch msg := msg.(type) {
 		case MsgSend:
 			return handleMsgSend(ctx, k, msg)
+		case MsgIBCSend:
+			return handleMsgIBCSend(ctx, k, msg)
 		case MsgIssue:
 			return handleMsgIssue(ctx, k, msg)
 		default:
@@ -26,6 +28,18 @@ func handleMsgSend(ctx sdk.Context, k Keeper, msg MsgSend) sdk.Result {
 	// NOTE: totalIn == totalOut should already have been checked
 
 	tags, err := k.InputOutputCoins(ctx, msg.Inputs, msg.Outputs)
+	if err != nil {
+		return err.Result()
+	}
+
+	return sdk.Result{
+		Tags: tags,
+	}
+}
+
+// Handle IBCMsgSend
+func handleMsgIBCSend(ctx sdk.Context, k Keeper, msg MsgIBCSend) sdk.Result {
+	tags, err := k.IBCSendCoins(ctx, msg.PayloadSend, msg.DestChain)
 	if err != nil {
 		return err.Result()
 	}
