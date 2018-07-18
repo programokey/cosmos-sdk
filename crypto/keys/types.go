@@ -7,6 +7,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/hd"
 )
 
+// KeyInfo type constants
+const (
+	TypeLocal   = "local"
+	TypeLedger  = "ledger"
+	TypeOffline = "offline"
+)
+
 // Keybase exposes operations on a generic keystore
 type Keybase interface {
 
@@ -74,7 +81,7 @@ func newLocalInfo(name string, pub crypto.PubKey, privArmor string) Info {
 }
 
 func (i localInfo) GetType() string {
-	return "local"
+	return TypeLocal
 }
 
 func (i localInfo) GetName() string {
@@ -101,7 +108,7 @@ func newLedgerInfo(name string, pub crypto.PubKey, path ccrypto.DerivationPath) 
 }
 
 func (i ledgerInfo) GetType() string {
-	return "ledger"
+	return TypeLedger
 }
 
 func (i ledgerInfo) GetName() string {
@@ -126,7 +133,7 @@ func newOfflineInfo(name string, pub crypto.PubKey) Info {
 }
 
 func (i offlineInfo) GetType() string {
-	return "offline"
+	return TypeOffline
 }
 
 func (i offlineInfo) GetName() string {
