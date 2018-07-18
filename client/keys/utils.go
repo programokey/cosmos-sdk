@@ -29,6 +29,17 @@ func GetKeyBase() (keys.Keybase, error) {
 	return GetKeyBaseFromDir(rootDir)
 }
 
+// GetKeyInfo returns key info for a given name. An error is returned if the
+// keybase cannot be retrieved or getting the info fails.
+func GetKeyInfo(name string) (keys.Info, error) {
+	keybase, err := GetKeyBase()
+	if err != nil {
+		return nil, err
+	}
+
+	return keybase.Get(name)
+}
+
 // initialize a keybase based on the configuration
 func GetKeyBaseFromDir(rootDir string) (keys.Keybase, error) {
 	if keybase == nil {
