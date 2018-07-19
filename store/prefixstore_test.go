@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/tendermint/iavl"
@@ -41,26 +42,26 @@ func testPrefixStore(t *testing.T, baseStore KVStore, prefix []byte) {
 	for i := 0; i < 20; i++ {
 		key := kvps[i].key
 		value := kvps[i].value
-		require.True(t, prefixPrefixStore.Has(key))
-		require.Equal(t, value, prefixPrefixStore.Get(key))
+		assert.True(t, prefixPrefixStore.Has(key))
+		assert.Equal(t, value, prefixPrefixStore.Get(key))
 
 		key = append([]byte("prefix"), key...)
-		require.True(t, prefixStore.Has(key))
-		require.Equal(t, value, prefixStore.Get(key))
+		assert.True(t, prefixStore.Has(key))
+		assert.Equal(t, value, prefixStore.Get(key))
 		key = append(prefix, key...)
-		require.True(t, baseStore.Has(key))
-		require.Equal(t, value, baseStore.Get(key))
+		assert.True(t, baseStore.Has(key))
+		assert.Equal(t, value, baseStore.Get(key))
 
 		key = kvps[i].key
 		prefixPrefixStore.Delete(key)
-		require.False(t, prefixPrefixStore.Has(key))
-		require.Nil(t, prefixPrefixStore.Get(key))
+		assert.False(t, prefixPrefixStore.Has(key))
+		assert.Nil(t, prefixPrefixStore.Get(key))
 		key = append([]byte("prefix"), key...)
-		require.False(t, prefixStore.Has(key))
-		require.Nil(t, prefixStore.Get(key))
+		assert.False(t, prefixStore.Has(key))
+		assert.Nil(t, prefixStore.Get(key))
 		key = append(prefix, key...)
-		require.False(t, baseStore.Has(key))
-		require.Nil(t, baseStore.Get(key))
+		assert.False(t, baseStore.Has(key))
+		assert.Nil(t, baseStore.Get(key))
 	}
 }
 
