@@ -144,7 +144,6 @@ FEATURES
 * [tests] Add WaitForNextNBlocksTM helper method
 * [keys] New keys now have 24 word recovery keys, for heightened security
 - [keys] Add a temporary method for exporting the private key
-* [store] Add transient store
 
 IMPROVEMENTS
 * [x/bank] Now uses go-wire codec instead of 'encoding/json'

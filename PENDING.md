@@ -6,6 +6,7 @@ BREAKING CHANGES
 
 FEATURES
 * [lcd] Can now query governance proposals by ProposalStatus
+* [store] Add transient store
 
 IMPROVEMENTS
 * [baseapp] Allow any alphanumeric character in route
